@@ -1,0 +1,10 @@
+{
+  "name": "chatgpt-function-calling",
+  "type": "module",
+  "devDependencies": {
+    "openai": "^3.3.0"
+  },
+  "version": "1.0.0",
+  "dependencies": {
+  }
+}
