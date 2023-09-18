@@ -1,15 +1,14 @@
 import {Configuration, OpenAIApi} from 'openai';
+import sendEmail from "./sendEmail.js";
 
 const configuration = new Configuration({
-    organization: "org-uoGVFme600n1NwkDznXHJ2FZ",
+    organization: "FILL_IN_ORGANIZATION",
     apiKey: process.env.OPENAI_API_KEY
 });
 
 const openai = new OpenAIApi(configuration);
 
-// Define your function
 function helloWorld(appendString) {
-    console.log("Hello World! " + appendString)
     return "Hello World! " + appendString
 }
 
@@ -33,7 +32,7 @@ async function callChatGPTWithFunctions(appendString) {
         content: "Perform function requests for the user"
     }, {
         role: "user",
-        content: "Hello, I am a user. I want to know the time of day."
+        content: "Hello, I am a user, I would like to send an email to my friend"
     }]
     let chat = await openai.createChatCompletion({
         model: "gpt-3.5-turbo-0613",
@@ -52,26 +51,33 @@ async function callChatGPTWithFunctions(appendString) {
                 },
                 require: ["appendString"]
             },
-        }, {
-            name: "getTimeOfDay",
-            description: "Get the time of day.",
-            parameters: {
-                type: "object",
-                properties: {
-                },
-                require: [],
-            }
-        }],
+        },
+            {
+                name: "sendEmail",
+                description: "Sends an email to the recipient with the message passed to it",
+                parameters: {
+                    type: "object",
+                    properties: {},
+                    require: [],
+                }
+            },
+            {
+                name: "getTimeOfDay",
+                description: "Get the time of day.",
+                parameters: {
+                    type: "object",
+                    properties: {},
+                    require: [],
+                }
+            }],
         function_call: "auto",
     })
 
     let wantsToUseFunction = chat.data.choices[0].finish_reason == "function_call"
-    // console.log(chat)
-    // console.log(wantsToUseFunction)
     let content = "";
     if (wantsToUseFunction) {
     }
-    // console.log(chat.data.choices[0].message)
+
     if (chat.data.choices[0].message.function_call.name === "helloWorld") {
         let argumentObj = JSON.parse(chat.data.choices[0].message.function_call.arguments)
         content = helloWorld(argumentObj.appendString)
@@ -83,7 +89,6 @@ async function callChatGPTWithFunctions(appendString) {
             name: "helloWorld",
             content: content
         })
-        // console.log(messages);
     }
     if (chat.data.choices[0].message.function_call.name === "getTimeOfDay") {
         content = getTimeOfDay()
@@ -91,6 +96,16 @@ async function callChatGPTWithFunctions(appendString) {
         messages.push({
             role: "function",
             name: "getTimeOfDay",
+            content
+        })
+    }
+
+    if (chat.data.choices[0].message.function_call.name === "sendEmail") {
+        content = await sendEmail()
+        messages.push(chat.data.choices[0].message)
+        messages.push({
+            role: "function",
+            name: "sendEmail",
             content
         })
     }
